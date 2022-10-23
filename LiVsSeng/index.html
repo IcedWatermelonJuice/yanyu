@@ -1,16 +1,232 @@
 <!DOCTYPE html>
 <html>
 	<head>
-		<meta charset="utf-8" />
+		<meta charset="utf-8">
 		<title></title>
+		<style>
+			#tips {
+				border: 1px solid black;
+				width: 100%;
+				margin: 5px 0;
+			}
+
+			#settings {
+				border: 1px solid black;
+				padding: 10px 0;
+				width: 100%;
+				display: flex;
+				justify-items: center;
+				justify-content: space-between;
+			}
+
+			.items {
+				padding: 10px;
+			}
+
+			#results {
+				border: 1px solid black;
+				display: none;
+				width: 100%;
+				margin-top: 5px;
+			}
+
+			.msg-injury {
+				color: red;
+			}
+
+			.msg-cure {
+				color: green;
+			}
+
+			.msg-talent {
+				color: goldenrod;
+			}
+		</style>
 		<script src="js/jquery.js"></script>
-		<script src="js/main.js"></script>
+		<script>
+			// jquery 扩展
+			$.fn.placeHolder = function() {
+				return this.attr("placeholder") ? this.attr("placeholder") : ""
+			}
+			$.fn.val2 = function() {
+				return this.val() ? this.val() : this.placeHolder()
+			}
+		</script>
+		<script>
+			//人物构造方法
+			function role(name, talent) {
+				this.backup = {
+					attack: parseInt($("#attack").val2()),
+					penetrate: parseInt($("#penetrate").val2()),
+					defend: parseInt($("#defend").val2()),
+					blood: parseInt($("#blood").val2())
+				}
+				this.attack = this.backup.attack;
+				this.penetrate = this.backup.penetrate;
+				this.defend = this.backup.defend;
+				this.blood = this.backup.blood;
+				this.name = name;
+				this.talentFlag = typeof talent === "function";
+				this.talent = this.talentFlag ? talent : function() {
+					this.msg.talent = "";
+					return null
+				}
+				this.msg = {};
+				this.alive = true;
+
+			}
+			role.prototype = {
+				state: function() {
+					var msg = "";
+					if (this.msg.injury) {
+						msg += `<span class="msg-injury">-${this.msg.injury}</span>`;
+					}
+					if (this.msg.cure) {
+						msg += `;<span class="msg-cure">+${this.msg.cure}</span>`;
+					}
+					if (this.msg.talent) {
+						msg += `;<span class="msg-talent">${this.msg.talent}</span>`;
+					}
+					msg = msg ? `(${msg})` : "";
+					return `${this.name}:${this.alive?`气血${this.blood}/${this.backup.blood} ${msg}`:"<span style='color:red'>已死亡</span>"}`
+				},
+				action: function(params) {
+					//攻击
+					this.talent(params);
+				},
+				suffer: function(role) {
+					this.msg = {};
+					var injury = role.attack * role.attack / (role.attack + this.defend * (1 - role.penetrate / 100));
+					injury = Math.floor(injury);
+					this.msg.injury = injury;
+					this.blood = this.blood - injury;
+					if (this.blood <= 0) {
+						this.alive = false;
+						this.blood = 0;
+					}
+					if (this.alive && this.talentFlag) {
+						this.talent();
+					}
+				}
+			}
+		</script>
+		<script>
+			//主方法
+			var Li = null,
+				Seng = null,
+				Attacker = null,
+				enable = false,
+				create = function() {
+					Li = new role("李一尘", function() {
+						var wine = Math.floor(this.backup.blood * 0.15 * 1.32);
+						if (this.blood + wine <= this.backup.blood) {
+							this.blood = this.blood + wine;
+							this.talentFlag = false;
+							this.msg.cure = wine;
+							this.msg.talent = "天赋发动：喝酒";
+						}
+					});
+					Seng = new role("火工老僧", function() {
+						var rate = Math.floor(80 * (this.backup.blood - this.blood) / this.backup.blood);
+						this.defend = parseInt(this.backup.defend * (1 + rate / 100));
+						this.msg.talent = "天赋发动：防御1" + rate + "%";
+					});
+					Attacker = new role("攻击者", function(data) {
+						if (data.attack) {
+							Li.suffer(this);
+							Seng.suffer(this);
+						}
+						var echo = Li.state() + " ; " + Seng.state();
+						echo = data.msg && typeof data.msg === "string" ? (data.msg + echo) : echo;
+						$("#results").append(`<span>${echo}</span><br>`);
+					});
+				},
+				start = function() {
+					create();
+					var num = 0;
+					if ($("#results").text()) {
+						$("#results").append("<br>")
+					}
+					$("#results").append(
+						`<span>回合设定 ${Attacker.attack}攻、${Attacker.penetrate}穿、${Attacker.defend}防、${Attacker.blood}血</span><br>`
+					)
+					Attacker.action({
+						msg: `回合开始 `,
+						attack: false
+					});
+					enable = true;
+					$("#results").show();
+					while (enable && num < 99) {
+						num = num + 1;
+						if (Li.alive && Seng.alive) {
+							Attacker.action({
+								msg: `第 ${num} 回合 `,
+								attack: true
+							});
+						} else {
+							enable = false;
+						}
+					}
+					var results = "";
+					if (!Li.alive && Seng.alive) {
+						results = "火工老僧胜出";
+					} else if (Li.alive && !Seng.alive) {
+						results = "李一尘胜出";
+					} else {
+						results = "无人胜出"
+					}
+					$("#results").append(`<span>回合结束 ${results}</span><br>`);
+				},
+				stop = function() {
+					enable = false;
+					$("#results").append(`<span>回合已停止</span><br>`);
+				},
+				remove = function() {
+					enable = false;
+					setTimeout(() => {
+						$("#results").hide();
+						$("#results").html("");
+					}, 100)
+				},
+				reset = function() {
+					remove();
+					$("#attack").val("");
+					$("#penetrate").val("");
+					$("#defend").val("");
+					$("#blood").val("");
+				}
+		</script>
 	</head>
 	<body>
-		<form id="engine" name="engine" action target="_blank" onsubmit="return false">
-			<input type="text" name="searchIpt"/>
-			<input type="submit" value="搜索" name="searchBtn">
-		</form>
-		<div id="result"></div>
+		<ul id="tips">
+			<li>攻方设定指模拟对李、僧的攻击强度</li>
+			<li>守方设定指对李、僧的坦度设定</li>
+			<li>伤害公式：攻方攻击x攻方攻击/(攻方攻击+守方防御)</li>
+			<li>李的酒受到“冲脉”12%加成以及“岿然顶天”20%加成</li>
+		</ul>
+		<div id="settings">
+			<span class="items">
+				<span>攻方设定</span>
+				攻击:
+				<input type="text" id="attack" placeholder="7000" />
+				穿甲:
+				<input type="text" id="penetrate" placeholder="20" />
+			</span>
+			<span class="items">
+				<span>守方设定</span>
+				防御:
+				<input type="text" id="defend" placeholder="9000" />
+				气血:
+				<input type="text" id="blood" placeholder="25000" />
+			</span>
+			<span class="items">
+				<span>控制台</span>
+				<button id="start" onclick="start()">开始</button>
+				<button id="start" onclick="stop()">停止</button>
+				<button id="clear" onclick="remove()">清除</button>
+				<button id="reset" onclick="reset()">重设</button>
+			</span>
+		</div>
+		<div id="results"></div>
 	</body>
 </html>
