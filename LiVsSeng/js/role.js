@@ -1,5 +1,5 @@
 //人物构造方法
-function role(name, talent) {
+function role(name, talent, skill) {
 	this.name = name;
 	name = $(".role-defender").is(":visible") || name === "攻击者" ? "默认" : name;
 	var source = "." + {
@@ -24,8 +24,20 @@ function role(name, talent) {
 		this.msg.talent = "";
 		return null
 	}
-	this.msg = {};
+	this.skill = typeof skill === "function" ? skill : function() {
+		this.msg.skill = "";
+		return null
+	}
 	this.alive = true;
+	var defMsg = {
+		injury: 0,
+		cure: 0,
+		talent: ""
+	};
+	this.initMsg=function(){
+		this.msg={...defMsg}
+	}
+	this.initMsg();
 }
 role.prototype = {
 	config: function(noName) {
@@ -35,6 +47,9 @@ role.prototype = {
 		var msg = "";
 		if (this.msg.injury) {
 			msg += `${msg?";":""}<span class="msg-injury">-${this.msg.injury}</span>`;
+		}
+		if (this.msg.skill) {
+			msg += `${msg?";":""}<span class="msg-skill">${this.msg.skill}</span>`;
 		}
 		if (this.msg.talent) {
 			msg += `${msg?";":""}<span class="msg-talent">${this.msg.talent}</span>`;
@@ -49,19 +64,21 @@ role.prototype = {
 		//攻击
 		this.talent(params);
 	},
-	suffer: function(role) {
-		this.msg = {};
+	suffer: function(role, round) {
+		round = round ? round : "0";
+		this.initMsg();
 		var injury = role.attack * role.attack / (role.attack + this.defend * (1 - role.penetrate / 100)) * (1 -
 			this.block / 100);
 		injury = Math.floor(injury);
-		this.msg.injury = injury;
+		this.msg.injury += injury;
 		this.blood = this.blood - injury;
 		if (this.blood <= 0) {
 			this.alive = false;
 			this.blood = 0;
 		}
 		if (this.alive && this.talentFlag) {
-			this.talent();
+			this.talent(round);
 		}
+		this.skill(round)
 	}
 }

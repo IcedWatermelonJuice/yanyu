@@ -9,7 +9,7 @@ var Li = null,
 			if (this.blood + wine <= this.backup.blood) {
 				this.blood = this.blood + wine;
 				this.talentFlag = false;
-				this.msg.cure = wine;
+				this.msg.cure = this.msg.cure + wine;
 				this.msg.talent = "天赋发动：喝酒";
 			}
 		});
@@ -20,8 +20,8 @@ var Li = null,
 		});
 		Attacker = new role("攻击者", function(data) {
 			if (data.attack) {
-				Li.suffer(this);
-				Seng.suffer(this);
+				Li.suffer(this, data.round);
+				Seng.suffer(this, data.round);
 			}
 			var echo = Li.state() + " ; " + Seng.state();
 			echo = data.msg && typeof data.msg === "string" ? (data.msg + echo) : echo;
@@ -52,7 +52,7 @@ var Li = null,
 			`<span>回合设定 攻方：${Attacker.attack}攻 ${Attacker.penetrate}穿、${$(".role-defender").is(":visible")?("守方："+Attacker.config(true)):(Li.config()+"、"+Seng.config())}</span><br>`
 		)
 		Attacker.action({
-			msg: `回合开始 `,
+			msg: "回合开始 ",
 			attack: false
 		});
 		enable = true;
@@ -61,7 +61,8 @@ var Li = null,
 			if (Li.alive && Seng.alive) {
 				Attacker.action({
 					msg: `第 ${num} 回合 `,
-					attack: true
+					attack: true,
+					round: num
 				});
 			} else {
 				enable = false;
@@ -137,7 +138,7 @@ $("body").ready(() => {
 					$(e.target).text("收起帮助");
 				}
 			},
-			close:function(){
+			close: function() {
 				$("#cmd").hide();
 			}
 		};

@@ -68,7 +68,9 @@
 .msg-talent {
 	color: goldenrod;
 }
-
+.msg-skill {
+	color: blue;
+}
 #cmd {
 	border: 1px solid black;
 	width: calc(100% - 20px);
