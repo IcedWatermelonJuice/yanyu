@@ -1,0 +1,89 @@
+#tips {
+	border: 1px solid black;
+	width: calc(100% - 40px);
+	margin: 5px 0;
+}
+
+#settings {
+	border: 1px solid black;
+	padding: 10px 0;
+	width: 100%;
+	display: grid;
+}
+
+.list-3,
+.list-4 {
+	grid-template-columns: 1fr;
+}
+
+@media screen and (min-width: 500px) {
+
+	.list-3,
+	.list-4 {
+		grid-template-columns: 1fr 1fr;
+	}
+
+}
+
+@media screen and (min-width: 750px) {
+
+	.list-3,
+	.list-4 {
+		grid-template-columns: 1fr 1fr 1fr;
+	}
+}
+
+@media screen and (min-width: 1000px) {
+	.list-3 {
+		grid-template-columns: 1fr 1fr 1fr;
+	}
+
+	.list-4 {
+		grid-template-columns: 1fr 1fr 1fr 1fr;
+	}
+}
+
+.items {
+	padding: 10px;
+	display: grid;
+	grid-template-rows: auto;
+	text-align: center;
+}
+
+#results {
+	border: 1px solid black;
+	width: 100%;
+	margin-top: 5px;
+	padding: 5px;
+}
+
+.msg-injury {
+	color: red;
+}
+
+.msg-cure {
+	color: green;
+}
+
+.msg-talent {
+	color: goldenrod;
+}
+
+#cmd {
+	border: 1px solid black;
+	width: calc(100% - 20px);
+	margin-top: 5px;
+	padding: 10px;
+}
+
+#cmd .command textarea {
+	width: 100%;
+	height: calc(10em + 6px);
+	margin-bottom: 5px;
+}
+
+#cmd .markdown {
+	border-top: 1px solid;
+	margin-top: 10px;
+	overflow: auto;
+}

@@ -2,200 +2,14 @@
 <html>
 	<head>
 		<meta charset="utf-8">
-		<title></title>
-		<style>
-			#tips {
-				border: 1px solid black;
-				width: 100%;
-				margin: 5px 0;
-			}
-
-			#settings {
-				border: 1px solid black;
-				padding: 10px 0;
-				width: 100%;
-				display: flex;
-				justify-items: center;
-				justify-content: space-between;
-			}
-
-			.items {
-				padding: 10px;
-			}
-
-			#results {
-				border: 1px solid black;
-				display: none;
-				width: 100%;
-				margin-top: 5px;
-			}
-
-			.msg-injury {
-				color: red;
-			}
-
-			.msg-cure {
-				color: green;
-			}
-
-			.msg-talent {
-				color: goldenrod;
-			}
-		</style>
+		<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no" />
+		<title>李 VS 僧 (LiVsSeng)</title>
+		<link type="text/css" rel="stylesheet" href="css/main.css" />
 		<script src="js/jquery.js"></script>
-		<script>
-			// jquery 扩展
-			$.fn.placeHolder = function() {
-				return this.attr("placeholder") ? this.attr("placeholder") : ""
-			}
-			$.fn.val2 = function() {
-				return this.val() ? this.val() : this.placeHolder()
-			}
-		</script>
-		<script>
-			//人物构造方法
-			function role(name, talent) {
-				this.backup = {
-					attack: parseInt($("#attack").val2()),
-					penetrate: parseInt($("#penetrate").val2()),
-					defend: parseInt($("#defend").val2()),
-					blood: parseInt($("#blood").val2())
-				}
-				this.attack = this.backup.attack;
-				this.penetrate = this.backup.penetrate;
-				this.defend = this.backup.defend;
-				this.blood = this.backup.blood;
-				this.name = name;
-				this.talentFlag = typeof talent === "function";
-				this.talent = this.talentFlag ? talent : function() {
-					this.msg.talent = "";
-					return null
-				}
-				this.msg = {};
-				this.alive = true;
-
-			}
-			role.prototype = {
-				state: function() {
-					var msg = "";
-					if (this.msg.injury) {
-						msg += `<span class="msg-injury">-${this.msg.injury}</span>`;
-					}
-					if (this.msg.cure) {
-						msg += `;<span class="msg-cure">+${this.msg.cure}</span>`;
-					}
-					if (this.msg.talent) {
-						msg += `;<span class="msg-talent">${this.msg.talent}</span>`;
-					}
-					msg = msg ? `(${msg})` : "";
-					return `${this.name}:${this.alive?`气血${this.blood}/${this.backup.blood} ${msg}`:"<span style='color:red'>已死亡</span>"}`
-				},
-				action: function(params) {
-					//攻击
-					this.talent(params);
-				},
-				suffer: function(role) {
-					this.msg = {};
-					var injury = role.attack * role.attack / (role.attack + this.defend * (1 - role.penetrate / 100));
-					injury = Math.floor(injury);
-					this.msg.injury = injury;
-					this.blood = this.blood - injury;
-					if (this.blood <= 0) {
-						this.alive = false;
-						this.blood = 0;
-					}
-					if (this.alive && this.talentFlag) {
-						this.talent();
-					}
-				}
-			}
-		</script>
-		<script>
-			//主方法
-			var Li = null,
-				Seng = null,
-				Attacker = null,
-				enable = false,
-				create = function() {
-					Li = new role("李一尘", function() {
-						var wine = Math.floor(this.backup.blood * 0.15 * 1.32);
-						if (this.blood + wine <= this.backup.blood) {
-							this.blood = this.blood + wine;
-							this.talentFlag = false;
-							this.msg.cure = wine;
-							this.msg.talent = "天赋发动：喝酒";
-						}
-					});
-					Seng = new role("火工老僧", function() {
-						var rate = Math.floor(80 * (this.backup.blood - this.blood) / this.backup.blood);
-						this.defend = parseInt(this.backup.defend * (1 + rate / 100));
-						this.msg.talent = "天赋发动：防御1" + rate + "%";
-					});
-					Attacker = new role("攻击者", function(data) {
-						if (data.attack) {
-							Li.suffer(this);
-							Seng.suffer(this);
-						}
-						var echo = Li.state() + " ; " + Seng.state();
-						echo = data.msg && typeof data.msg === "string" ? (data.msg + echo) : echo;
-						$("#results").append(`<span>${echo}</span><br>`);
-					});
-				},
-				start = function() {
-					create();
-					var num = 0;
-					if ($("#results").text()) {
-						$("#results").append("<br>")
-					}
-					$("#results").append(
-						`<span>回合设定 ${Attacker.attack}攻、${Attacker.penetrate}穿、${Attacker.defend}防、${Attacker.blood}血</span><br>`
-					)
-					Attacker.action({
-						msg: `回合开始 `,
-						attack: false
-					});
-					enable = true;
-					$("#results").show();
-					while (enable && num < 99) {
-						num = num + 1;
-						if (Li.alive && Seng.alive) {
-							Attacker.action({
-								msg: `第 ${num} 回合 `,
-								attack: true
-							});
-						} else {
-							enable = false;
-						}
-					}
-					var results = "";
-					if (!Li.alive && Seng.alive) {
-						results = "火工老僧胜出";
-					} else if (Li.alive && !Seng.alive) {
-						results = "李一尘胜出";
-					} else {
-						results = "无人胜出"
-					}
-					$("#results").append(`<span>回合结束 ${results}</span><br>`);
-				},
-				stop = function() {
-					enable = false;
-					$("#results").append(`<span>回合已停止</span><br>`);
-				},
-				remove = function() {
-					enable = false;
-					setTimeout(() => {
-						$("#results").hide();
-						$("#results").html("");
-					}, 100)
-				},
-				reset = function() {
-					remove();
-					$("#attack").val("");
-					$("#penetrate").val("");
-					$("#defend").val("");
-					$("#blood").val("");
-				}
-		</script>
+		<script src="js/jquery-extensions.js"></script>
+		<script src="js/marked.min.js"></script>
+		<script src="js/role.js"></script>
+		<script src="js/main.js"></script>
 	</head>
 	<body>
 		<ul id="tips">
@@ -203,30 +17,92 @@
 			<li>守方设定指对李、僧的坦度设定</li>
 			<li>伤害公式：攻方攻击x攻方攻击/(攻方攻击+守方防御-攻方穿甲x守方防御)</li>
 			<li>李的酒受到“冲脉”12%加成以及“岿然顶天”20%加成</li>
+			<li>更多自定义设置，请点击下方控制台的“更多”</li>
 		</ul>
-		<div id="settings">
-			<span class="items">
-				<span>攻方设定</span>
-				攻击:
-				<input type="text" id="attack" placeholder="7000" />
-				穿甲:
-				<input type="text" id="penetrate" placeholder="20" />
+		<div id="settings" class="list-3">
+			<span class="items role-attacker">
+				<div class="section">攻方设定</div>
+				<div class="section">
+					<span>攻击:</span>
+					<input type="text" class="attack" placeholder="7000" />
+				</div>
+				<div class="section">
+					<span>穿甲:</span>
+					<input type="text" class="penetrate" placeholder="20" />
+				</div>
 			</span>
-			<span class="items">
-				<span>守方设定</span>
-				防御:
-				<input type="text" id="defend" placeholder="9000" />
-				气血:
-				<input type="text" id="blood" placeholder="25000" />
+			<span class="items role-defender">
+				<div class="section">守方设定</div>
+				<div class="section">
+					<span>防御:</span>
+					<input type="text" class="defend" placeholder="9000" />
+				</div>
+				<div class="section">
+					<span>气血:</span>
+					<input type="text" class="blood" placeholder="25000" />
+				</div>
+				<div class="section">
+					<span>免伤:</span>
+					<input type="text" class="block" placeholder="0" />
+				</div>
 			</span>
-			<span class="items">
-				<span>控制台</span>
-				<button id="start" onclick="start()">开始</button>
-				<button id="start" onclick="stop()">停止</button>
-				<button id="clear" onclick="remove()">清除</button>
-				<button id="reset" onclick="reset()">重设</button>
+			<span class="items role-li" style="display: none;">
+				<div class="section">李一尘</div>
+				<div class="section">
+					<span>防御:</span>
+					<input type="text" class="defend" placeholder="9000" />
+				</div>
+				<div class="section">
+					<span>气血:</span>
+					<input type="text" class="blood" placeholder="25000" />
+				</div>
+				<div class="section">
+					<span>免伤:</span>
+					<input type="text" class="block" placeholder="0" />
+				</div>
+			</span>
+			<span class="items role-seng" style="display: none;">
+				<div class="section">火工老僧</div>
+				<div class="section">
+					<span>防御:</span>
+					<input type="text" class="defend" placeholder="9000" />
+				</div>
+				<div class="section">
+					<span>气血:</span>
+					<input type="text" class="blood" placeholder="25000" />
+				</div>
+				<div class="section">
+					<span>免伤:</span>
+					<input type="text" class="block" placeholder="0" />
+				</div>
+			</span>
+			<span class="items config-desk">
+				<div class="section">控制台</div>
+				<div class="section">
+					<button id="more" onclick="more()">更多</button>
+					<button id="back" onclick="back()" style="display: none;">返回</button>
+					<button id="start" onclick="start()">开始</button>
+					<button id="start" onclick="stop()">停止</button>
+					<button id="remove" onclick="remove()">清除</button>
+					<button id="reset" onclick="reset()">重设</button>
+					<button id="js" onclick="js()" style="display: none;">命令</button>
+				</div>
 			</span>
 		</div>
-		<div id="results"></div>
+		<div id="cmd" style="display: none;">
+			<div class="command">
+				<textarea placeholder="请在这里输入JS命令"></textarea>
+				<br>
+				<button data-fn="execute">执行命令</button>
+				<button data-fn="clear">清空命令</button>
+				<button data-fn="help">显示帮助</button>
+				<button data-fn="close">关闭JS</button>
+			</div>
+			<div class="markdown" style="display: none;"></div>
+		</div>
+		<div id="results">
+			<div class="sug">回合日志将记录在这里</div>
+			<div class="logs"></div>
+		</div>
 	</body>
 </html>
