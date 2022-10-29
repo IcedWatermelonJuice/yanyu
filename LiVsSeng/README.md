@@ -14,12 +14,13 @@
 // 模拟攻击者 变量名Attacker
 // 人物对象当前属性变量名attack(攻击)、penetrate(穿甲)、defend(防御)、blood(气血)、block(免伤)，不会更改初始设定值
 // 人物talent(天赋)先于skill(技能)发动
-// 示例1 半血pk
+
+// 示例1 半血pk并且李的酒没有额外加成
 create();// 创建对象实例,数据来源设定区
 Li.blood=Li.blood/2;// 李一尘更改为半血
 Seng.blood=Seng.blood/2;// 火工老僧更改为半血
 Li.talent=function(){// 李一尘天赋更改
-	var wine = Math.floor(this.backup.blood);// this指当前人物对象，也就是Li。this.backup内保存初始设定值。这里是更改酒的回复效果
+	var wine = Math.floor(this.backup.blood * 0.15);// this指当前人物对象，也就是Li。this.backup内保存初始设定值。这里是更改酒的回复效果
 	if (this.blood + wine <= this.backup.blood) {// 当前血量this.blood + 酒wine 不大于 最大血量this.backup.blood 时执行回血
 		this.blood = this.blood + wine;
 		this.talentFlag = false;// 天赋关闭，防止一直触发天赋效果
@@ -29,6 +30,7 @@ Li.talent=function(){// 李一尘天赋更改
 }
 Seng.talent();// 由于更改过气血，首先执行一次天赋更正防御属性
 start("自定义");//开始回合模拟
+
 // 示例2 内功自定义为万象魔功（通过技能skill实现）
 function wanxiang(r){// 万象魔功
 	var rate = Math.floor(30 * (r.backup.blood - r.blood) / r.backup.blood);// 损失血量比例
@@ -44,6 +46,7 @@ Seng.skill=function(){
 	wanxiang(this);
 }
 start("自定义");
+
 // 示例3 内功自定义为奶内（通过技能skill实现）
 function nainei(r,round){// 奶内
 	var cure=4400* 1.32;// 自定义回血，以及回血比例（冲脉12 岿然顶天20）

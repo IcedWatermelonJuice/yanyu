@@ -1,0 +1,17 @@
+{
+	"jquery": {
+		"src": "../lib/jquery.js"
+	},
+	"jquery-extensions": {
+		"src": "../lib/jquery-extensions.js"
+	},
+	"marked": {
+		"src": "../lib/marked.min.js"
+	},
+	"role": {
+		"src": "./js/role.js"
+	},
+	"main": {
+		"src": "./js/main.js"
+	}
+}
