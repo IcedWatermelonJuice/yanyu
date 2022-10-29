@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no" />
+		<title>烟雨</title>
+		<script src="lib/marked.min.js"></script>
+		<script>
+			function loadMD() {
+				fetch("README.md").then(r => {
+					return r.text()
+				}).then(r => {
+					document.body.innerHTML = marked.parse(r);
+				})
+			}
+			loadMD();
+		</script>
+	</head>
+	<body>
+		若未能加载/渲染成功，请点击<a href="javascript:loadMD()">这里</a>
+	</body>
+</html>
